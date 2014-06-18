@@ -1,0 +1,17 @@
+#/bin/bash
+# keep updating wtools within a week
+
+if [ -f $WTOOLS_CACHE/last_updated ]; then
+    last=$(cat $WTOOLS_CACHE/last_updated)
+    if [ -z $last ]; then
+        last=0
+    fi
+    curr=$(date '+%s')
+    diff=$(($curr - $last))
+    if [ $diff -gt 86400 ]; then # if not updated within 1 days
+        git --git-dir=$WTOOLS_ROOT/.git --work-tree=$WTOOLS_ROOT pull > /dev/null
+        echo $(date '+%s') > $WTOOLS_CACHE/last_updated
+    fi
+else
+    echo $(date '+%s') > $WTOOLS_CACHE/last_updated
+fi

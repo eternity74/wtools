@@ -1,0 +1,5 @@
+altscreen on
+termcapinfo xterm ti@:te@
+hardstatus alwayslastline
+hardstatus string "%{= KW} %H %{= Kw}|%{-} %-Lw%{= bW}%n%f %t%{-}%+Lw %= %Y-%M-%d"
+#hardstatus string "%{= KW} %H %{= Kw}|%{-} %-Lw%{= bW}%n%f %t%{-}%+Lw %=%C%a %Y-%M-%d"
