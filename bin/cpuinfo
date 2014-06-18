@@ -1,0 +1,17 @@
+#!/bin/bash
+adb root 1> /dev/null
+adb wait-for-device
+
+scaling_governor=$(adb shell cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+
+echo "*** /sys/devices/system/cpu/cpu0/cpufreq/"
+adb shell 'cd /sys/devices/system/cpu/cpu0/cpufreq/; for i in *; do echo $i=$(cat $i); done; cd /'
+echo
+
+echo "*** /sys/devices/system/cpu/cpufreq/"$scaling_governor
+adb shell 'cd /sys/devices/system/cpu/cpufreq/$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)/; for i in *; do echo $i=$(cat $i); done; cd /'
+echo
+
+echo "*** /sys/module/cpu_boost/parameters/"
+adb shell 'cd /sys/module/cpu_boost/parameters/; for i in *; do echo $i=$(cat $i); done; cd /'
+echo

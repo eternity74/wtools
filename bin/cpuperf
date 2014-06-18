@@ -1,0 +1,15 @@
+#!/bin/bash
+adb wait-for-device
+adb root 1>/dev/null
+adb wait-for-device
+adb shell stop thermal-engine
+adb shell stop mpdecision
+core_num=$(adb shell cat /proc/cpuinfo | grep -c "processor")
+echo "cpu core: $core_num"
+for((i=0; i<$core_num; i++)); do
+    adb shell "echo 1 > /sys/devices/system/cpu/cpu$i/online"
+    adb shell "echo performance > /sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor"
+    adb shell "echo cpu$i online: $(adb shell cat /sys/devices/system/cpu/cpu$i/online)"
+    adb shell echo cpu$i scaling_governor: $(adb shell cat /sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor)
+    adb shell "cat /sys/devices/system/cpu/cpu$i/cpufreq/cpuinfo_max_freq > /sys/devices/system/cpu/cpu$i/cpufreq/scaling_max_freq"
+done
