@@ -1,5 +1,13 @@
 #!/usr/bin/bash
 
-url=$1
+#url=$1
+echo "Connecting $url"
+shopt -s nocasematch
+if [[ $1 != http://* && $1 != https://* ]]
+then
+    url="http://$1"
+else
+    url=$1
+fi
 echo "Connecting $url"
 adb shell "am start -a android.intent.action.VIEW -d '$url' -n com.android.browser/com.android.browser.BrowserActivity -e com.android.browser.application_id com.android.browser" 1> /dev/null
