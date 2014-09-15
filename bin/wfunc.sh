@@ -20,11 +20,11 @@ function get_android_root {
     cwd=$(pwd)
     while [ "$cwd" != '/' ]
     do
-        cwd=$(dirname $cwd)
         if [[ $(basename $cwd)=='android' && -d $cwd"/dalvik" ]]
         then
             break
         fi
+        cwd=$(dirname $cwd)
     done
 
     echo $cwd
