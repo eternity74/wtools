@@ -1,0 +1,6 @@
+#!/bin/bash
+select filename in $(find . -iname $1 -o -iname $1.java -o -iname $1.cc -o -iname $1.h -o -iname  $1.cpp)
+do
+    vim $filename
+    break
+done 

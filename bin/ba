@@ -1,0 +1,74 @@
+#!/bin/bash
+function cwd_from_android() {
+    cdir=$PWD
+    out=""
+    found=0
+    while [ $(dirname $cdir) != "/" ]
+    do
+        tok=$(basename $cdir)
+        out=$tok/$out
+        if [ $tok == "android" ] && [ -d "$cdir/external" ]; then
+            found=1
+            break
+        fi
+        cdir=$(dirname $cdir)
+    done
+    if [ $found -eq 0 ];then
+        out=""
+    fi
+    echo $out
+}
+ 
+if [ "" = "$1" ] ; then
+	echo 'Create before/after files in the given commit'
+	echo 'usage: ' $0 'commit-id [-b commit-id] [-o output-dir] [-p prefix-dir]'
+	exit 1
+fi
+a_commitid=$1^
+b_commitid=$1
+prefix=$(cwd_from_android)
+patch_root=diff_$b_commitid
+shift
+until [ -z "$1" ] ; do
+        option=$1
+        value=$2
+        if [ "-o" == "$option" ] ; then
+            patch_root=$value/diff_$b_commitid
+        fi
+        if [ "-p" == "$option" ] ; then
+            prefix=$value
+        fi
+        if [ "-b" == "$option" ] ; then
+            a_commitid=$value
+        fi
+        echo "$option : $value"
+        shift 
+        shift
+        done
+
+#files="$(git diff --name-only $1^..$1 2>/dev/null)"
+files="$(git diff --name-only $a_commitid..$b_commitid 2>/dev/null)"
+if [ "" = "$files" ]; then
+	echo -e "error: unknown \e[0;33mcommit $1"
+	echo -en "\E[0m"
+	exit 1
+fi
+
+echo "$prefix $patch_root"
+for file in $files; do
+    before=$patch_root/before/$prefix/$file
+    after=$patch_root/after/$prefix/$file
+	if [ -n $(dirname $patch_root/before/$prefix/$file) ]; then
+		echo "creating $(dirname $patch_root/before/$prefix/$file)"
+		mkdir -p $(dirname $patch_root/before/$prefix/$file)
+	fi
+	if [ -n $(dirname $patch_root/after/$prefix/$file) ]; then
+		echo "creating $(dirname $patch_root/after/$prefix/$file)"
+		mkdir -p $(dirname $patch_root/after/$prefix/$file)
+	fi
+    git cat-file -e $a_commitid:$file && git show $a_commitid:$file > $before
+    git cat-file -e $b_commitid:$file && git show $b_commitid:$file > $after
+done
+git log $a_commitid..$b_commitid --name-only > $patch_root/commit-info.txt
+echo "done!"
+
