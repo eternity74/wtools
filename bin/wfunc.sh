@@ -5,17 +5,27 @@ then
     echo ~/.wtools created
 fi
 function aroot {
-    ace_root=$(get_android_root)
-    if [[ $ace_root == "/" && -f ~/.wtools/ace_root_cache ]]
+    gotodir "vendor/lge/external/chromium34_lge/src" "ace_root_cache"
+}
+function broot {
+    gotodir "vendor/lge/apps/Browser4_KLP" "browser_root_cache"
+}
+
+function gotodir {
+    android_root=$(get_android_root)
+    target_dir=$1
+    cache_file=~/.wtools/$2
+    if [[ $android_root == "/" && -f $cache_file ]]
     then
-        cd $(cat ~/.wtools/ace_root_cache)
-    elif [[ $ace_root != "/" ]]
+        cd $(cat $cache_file)
+    elif [[ $android_root != "/" ]]
     then
-        ace_root=$ace_root"/vendor/lge/external/chromium34_lge/src"
-        cd $ace_root
-        echo $ace_root > ~/.wtools/ace_root_cache
+        full_dir=$android_root/$target_dir
+        cd $full_dir
+        echo $full_dir > $cache_file
     fi
 }
+
 function get_android_root {
     cwd=$(pwd)
     while [ "$cwd" != '/' ]
