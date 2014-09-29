@@ -1,4 +1,20 @@
 #/bin/bash
+
+# keep updating wtools within a week
+
+if [ -f ~/.wtools/last_updated ]; then
+    last=$(cat ~/.wtools/last_updated)
+    curr=$(date '+%s')
+    diff=$(($curr - $last))
+    if [ $diff -gt 604800 ]; then # if not updated within 7 days
+        git --git-dir ~/wtools/.git pull > /dev/null
+        echo $(date '+%s') > ~/.wtools/last_updated
+    fi
+else
+    echo $(date '+%s') > ~/.wtools/last_updated
+fi
+
+
 if [[ ! -d ~/.wtools ]]
 then
     mkdir ~/.wtools
