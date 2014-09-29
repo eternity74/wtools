@@ -7,16 +7,22 @@ then
     echo $WTOOLS_CACHE created
 fi
 
+WTOOLS_CACHED_ANDROID_ROOT=
+
 # keep updating wtools within a week
 WTOOLS_ROOT=$WTOOLS_ROOT WTOOLS_CACHE=$WTOOLS_CACHE $WTOOLS_ROOT/update
 
-
+# goto ace34 root
 function aroot {
     gotodir "vendor/lge/external/chromium34_lge/src"
 }
+
+# goto browser root
 function broot {
     gotodir "vendor/lge/apps/Browser4_KLP"
 }
+
+# goto android root
 function croot {
     gotodir "."
 }
@@ -25,14 +31,21 @@ function gotodir {
     android_root=$(get_android_root)
     target_dir=$1
     cache_file=$WTOOLS_CACHE/working_android_root
-    if [[ $android_root == "/" && -f $cache_file ]]
+    if [[ $WTOOLS_CACHED_ANDROID_ROOT == "" && -f $cache_file ]]; then
+        WTOOLS_CACHED_ANDROID_ROOT=$(cat $cache_file)
+    fi
+    if [[ $android_root == "/" ]]
     then
-        cd $(cat $cache_file)/$target_dir
-    elif [[ $android_root != "/" ]]
-    then
-        full_dir=$android_root/$target_dir
+        if [[ "$WTOOLS_CACHED_ANDROID_ROOT" != "" ]]; then
+            cd $WTOOLS_CACHED_ANDROID_ROOT/$target_dir
+        fi
+    else
+        WTOOLS_CACHED_ANDROID_ROOT=$android_root
+        full_dir=$WTOOLS_CACHED_ANDROID_ROOT/$target_dir
         cd $full_dir
-        echo $android_root > $cache_file
+        if [[ "$(cat $cache_file)" != "$WTOOLS_CACHED_ANDROID_ROOT" ]]; then
+            echo $WTOOLS_CACHED_ANDROID_ROOT > $cache_file
+       fi
     fi
 }
 
