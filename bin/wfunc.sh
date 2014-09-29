@@ -10,6 +10,9 @@ function aroot {
 function broot {
     gotodir "vendor/lge/apps/Browser4_KLP"
 }
+function croot {
+    gotodir "."
+}
 
 function gotodir {
     android_root=$(get_android_root)
