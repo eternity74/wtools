@@ -1,9 +1,6 @@
 #/bin/bash
 # keep updating wtools within a week
 
-echo $WTOOLS_ROOT
-echo $WTOOLS_CACHE
-
 if [ -f $WTOOLS_CACHE/last_updated ]; then
     last=$(cat $WTOOLS_CACHE/last_updated)
     curr=$(date '+%s')
