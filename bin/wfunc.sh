@@ -1,25 +1,16 @@
 #/bin/bash
+WTOOLS_ROOT=$(git rev-parse --show-toplevel)
+WTOOLS_CACHE=$WTOOLS_ROOT/.cache
+if [[ ! -d $WTOOLS_CACHE ]]
+then
+    mkdir $WTOOLS_CACHE
+    echo $WTOOLS_CACHE created
+fi
 
 # keep updating wtools within a week
-
-if [ -f ~/.wtools/last_updated ]; then
-    last=$(cat ~/.wtools/last_updated)
-    curr=$(date '+%s')
-    diff=$(($curr - $last))
-    if [ $diff -gt 604800 ]; then # if not updated within 7 days
-        git --git-dir ~/wtools/.git pull > /dev/null
-        echo $(date '+%s') > ~/.wtools/last_updated
-    fi
-else
-    echo $(date '+%s') > ~/.wtools/last_updated
-fi
+WTOOLS_ROOT=$WTOOLS_ROOT WTOOLS_CACHE=$WTOOLS_CACHE $WTOOLS_ROOT/update
 
 
-if [[ ! -d ~/.wtools ]]
-then
-    mkdir ~/.wtools
-    echo ~/.wtools created
-fi
 function aroot {
     gotodir "vendor/lge/external/chromium34_lge/src"
 }
@@ -33,7 +24,7 @@ function croot {
 function gotodir {
     android_root=$(get_android_root)
     target_dir=$1
-    cache_file=~/.wtools/working_android_root
+    cache_file=$WTOOLS_CACHE/working_android_root
     if [[ $android_root == "/" && -f $cache_file ]]
     then
         cd $(cat $cache_file)/$target_dir
