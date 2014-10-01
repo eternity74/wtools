@@ -1,0 +1,87 @@
+#!/usr/bin/python
+import os
+import sys
+import subprocess
+import glob
+
+cwd = os.getcwd()
+
+override_sympath = {}
+
+# Find the android root dir
+while cwd!='/':
+    cwd = os.path.dirname(cwd)
+    if os.path.basename(cwd)=='android' and os.path.exists(cwd+'/dalvik'):
+        break
+
+if cwd=='/':
+    print "need be launch in android source tree"
+    sys.exit(1)
+
+home_android = cwd
+out_android = glob.glob(home_android+'/out*')[0]
+symbols_android = os.getenv('ACE_SYMBOLS_PATH', glob.glob(out_android+'/target/product/*')[0]+'/symbols/system/lib/')
+if len(symbols_android)>0 and symbols_android[-1]!='/':
+    symbols_android = symbols_android + '/'
+print 'SYMBOLS_ANDROID_PATH: ' + symbols_android
+
+
+if os.path.exists("./liblgewebviewchromium.so"):
+    override_sympath['liblgewebviewchromium.so']='./'
+    print "use overide path"
+elif os.path.exists(symbols_android) == False:
+    print 'symbols path does not exist: export ACE_SYMBOLS_PATH='
+    sys.exit(1)
+
+if len(sys.argv)<2:
+    print "argument requried!"
+    sys.exit(1)
+
+
+filename = sys.argv[1]
+
+addrs = {}
+for index,l in enumerate(open(filename).readlines()):
+    data = l.strip().split()
+    if len(data)==0:
+        continue
+    if 'pc' in data:
+        idx_pc = data.index('pc')
+        addr = data[idx_pc+1]
+        lib = os.path.basename(data[idx_pc+2])
+        if addrs.has_key(lib):
+            addrs[lib].append( [index,addr] )
+        else:
+            addrs[lib] = [[index,addr]]
+    else:
+        (lib,addr) = data[-1].split('+')
+        lib = os.path.basename(lib)
+        if addrs.has_key(lib):
+            addrs[lib].append( [index,addr] )
+        else:
+            addrs[lib] = [[index,addr]]
+callstack = []
+for lib in addrs.keys():
+    addrinlib = addrs[lib]
+    query = [ addr[1] for addr in addrinlib ]
+    symbol_path = symbols_android+lib
+    if override_sympath.has_key(lib):
+        symbol_path = override_sympath[lib]+lib
+    #print override_sympath,symbol_path
+    if os.path.exists(symbol_path):
+        p = subprocess.Popen(['addr2line','-C','-f','-e', symbol_path]+query, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        if err != "":
+            print err
+            sys.exit(1)
+        for i,o in enumerate(out.strip().split('\n')):
+            addrinlib[i/2].append(o)
+        for item in addrinlib:
+            callstack.append(item)
+    #else:
+        #print addrinlib
+for call in sorted(callstack,cmp=lambda x,y:x[0]-y[0]):
+    func = call[2]
+    fname,ln = call[3].split(':')
+    fname = fname.split("src/")[-1]
+    print "%s:%s:%s" % (fname, ln,func)
