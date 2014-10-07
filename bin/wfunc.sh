@@ -14,18 +14,21 @@ WTOOLS_ROOT=$WTOOLS_ROOT WTOOLS_CACHE=$WTOOLS_CACHE $WTOOLS_ROOT/update
 
 # goto ace34 root
 function aroot {
-    if [[ "$1" == "-" && -n "$prev_aroot" ]];then
-        gotodir "vendor/lge/external/$prev_aroot/src"
+    #gotodir "vendor/lge/external/chromium34_lge/src"
+    #return
+    if [[ "$1" == "-" && -n "$aroot_prev" ]];then
+        gotodir "vendor/lge/external/$aroot_prev/src"
         return
     fi
-    ace_folders=( $(get_android_root_with_cache)/vendor/lge/external/chromium*/src )
-    ace_folders=${ace_folders[@]//\/src/}
-    if [[ ${#ace_folders[@]} -le 1 ]]; then
-        gotodir "vendor/lge/external/${ace_folders[1]//*\//}"
+    aroot_dirs=( $(get_android_root_with_cache)/vendor/lge/external/chromium*/src )
+    aroot_dirs2=( ${aroot_dirs[@]//\/src/} )
+    if [[ ${#aroot_dirs2[@]} -le 1 ]]; then
+        gotodir "vendor/lge/external/${aroot_dirs2[1]//*\//}"
         return
     fi
-    select opt in ${ace_folders[@]//*\//};do
-        prev_aroot=$opt
+    echo ${aroot_dirs2[@]}
+    select opt in ${aroot_dirs2[@]//*\//};do
+        aroot_prev=$opt
         gotodir "vendor/lge/external/$opt/src"
         return
     done
