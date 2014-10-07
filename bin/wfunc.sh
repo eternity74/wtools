@@ -79,13 +79,13 @@ function gotodir {
 
 function get_android_root {
     cwd=$(pwd)
-    if [[ -d $cwd"/android" && -d $cwd"/android/dalvik" ]]; then
+    if [[ -d $cwd"/android" && -d $cwd"/android/vendor" ]]; then
         echo $cwd/android
         return 0
     fi
     while [ "$cwd" != '/' ]
     do
-        if [[ $(basename $cwd)=='android' && -d $cwd"/dalvik" ]]
+        if [[ $(basename $cwd)=='android' && -d $cwd"/vendor" ]]
         then
             break
         fi
