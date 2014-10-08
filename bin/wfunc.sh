@@ -14,8 +14,6 @@ WTOOLS_ROOT=$WTOOLS_ROOT WTOOLS_CACHE=$WTOOLS_CACHE $WTOOLS_ROOT/update
 
 # goto ace34 root
 function aroot {
-    #gotodir "vendor/lge/external/chromium34_lge/src"
-    #return
     if [[ "$1" == "-" && -n "$aroot_prev" ]];then
         gotodir "vendor/lge/external/$aroot_prev/src"
         return
@@ -23,7 +21,7 @@ function aroot {
     aroot_dirs=( $(get_android_root_with_cache)/vendor/lge/external/chromium*/src )
     aroot_dirs2=( ${aroot_dirs[@]//\/src/} )
     if [[ ${#aroot_dirs2[@]} -le 1 ]]; then
-        gotodir "vendor/lge/external/${aroot_dirs2[1]//*\//}"
+        gotodir "vendor/lge/external/${aroot_dirs2[0]//*\//}/src"
         return
     fi
     echo ${aroot_dirs2[@]}
