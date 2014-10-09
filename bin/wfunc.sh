@@ -24,7 +24,6 @@ function aroot {
         gotodir "vendor/lge/external/${aroot_dirs2[0]//*\//}/src"
         return
     fi
-    echo ${aroot_dirs2[@]}
     select opt in ${aroot_dirs2[@]//*\//};do
         aroot_prev=$opt
         gotodir "vendor/lge/external/$opt/src"
