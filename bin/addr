@@ -22,11 +22,9 @@ home_android = cwd
 out_android = glob.glob(home_android+'/out*')[0]
 symbols_android = os.getenv('ACE_SYMBOLS_PATH', glob.glob(out_android+'/target/product/*')[0]+'/symbols/system/lib/')
 symbols_ace = glob.glob(out_android+'/target/product/*')[0]+'/obj/ACE/build_intermediates/out/Release/lib/'
-print symbols_ace
 if len(symbols_android)>0 and symbols_android[-1]!='/':
     symbols_android = symbols_android + '/'
-print 'SYMBOLS_ANDROID_PATH: ' + symbols_android
-
+print 'SYMBOLS_ANDROID_PATH: ' + symbols_android,
 
 if os.path.exists("./liblgewebviewchromium.so"):
     override_sympath['liblgewebviewchromium.so']='./'
@@ -85,8 +83,10 @@ for lib in addrs.keys():
             callstack.append(item)
     #else:
         #print addrinlib
+outfile = open(filename+".callstack")
 for call in sorted(callstack,cmp=lambda x,y:x[0]-y[0]):
     func = call[2]
     fname,ln = call[3].split(':')
     fname = fname.split("src/")[-1]
     print "%s:%s:%s" % (fname, ln,func)
+    outfile("%s:%s:%s\n" % (fname, ln,func))
