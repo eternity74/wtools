@@ -21,6 +21,8 @@ if cwd=='/':
 home_android = cwd
 out_android = glob.glob(home_android+'/out*')[0]
 symbols_android = os.getenv('ACE_SYMBOLS_PATH', glob.glob(out_android+'/target/product/*')[0]+'/symbols/system/lib/')
+symbols_ace = glob.glob(out_android+'/target/product/*')[0]+'/obj/ACE/build_intermediates/out/Release/lib/'
+print symbols_ace
 if len(symbols_android)>0 and symbols_android[-1]!='/':
     symbols_android = symbols_android + '/'
 print 'SYMBOLS_ANDROID_PATH: ' + symbols_android
@@ -29,7 +31,10 @@ print 'SYMBOLS_ANDROID_PATH: ' + symbols_android
 if os.path.exists("./liblgewebviewchromium.so"):
     override_sympath['liblgewebviewchromium.so']='./'
     print "use overide path"
-elif os.path.exists(symbols_android) == False:
+elif os.path.exists(symbols_ace+"/liblgewebviewchromium.so") == True:
+    override_sympath['liblgewebviewchromium.so']=symbols_ace
+    print "use overide path :",symbols_ace
+elif os.path.exists(symbols_ace) == False and os.path.exists(symbols_android) == False:
     print 'symbols path does not exist: export ACE_SYMBOLS_PATH='
     sys.exit(1)
 
