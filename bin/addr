@@ -83,10 +83,11 @@ for lib in addrs.keys():
             callstack.append(item)
     #else:
         #print addrinlib
-outfile = open(filename+".callstack")
+outfile = open("%s.callstack" % filename,"w")
 for call in sorted(callstack,cmp=lambda x,y:x[0]-y[0]):
     func = call[2]
     fname,ln = call[3].split(':')
     fname = fname.split("src/")[-1]
     print "%s:%s:%s" % (fname, ln,func)
-    outfile("%s:%s:%s\n" % (fname, ln,func))
+    outfile.write("%s:%s:%s\n" % (fname, ln,func))
+outfile.close()
