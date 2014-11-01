@@ -14,16 +14,17 @@ while cwd!='/':
     if os.path.basename(cwd)=='android' and os.path.exists(cwd+'/dalvik'):
         break
 
-if cwd=='/':
-    print "need be launch in android source tree"
-    sys.exit(1)
-
 home_android = cwd
-out_android = glob.glob(home_android+'/out*')[0]
-symbols_android = os.getenv('ACE_SYMBOLS_PATH', glob.glob(out_android+'/target/product/*')[0]+'/symbols/system/lib/')
-symbols_ace = glob.glob(out_android+'/target/product/*')[0]+'/obj/ACE/build_intermediates/out/Release/lib/'
-if len(symbols_android)>0 and symbols_android[-1]!='/':
-    symbols_android = symbols_android + '/'
+symbols_android='./'
+symbols_ace='./'
+
+if home_android != '/':
+    out_android = glob.glob(home_android+'/out*')[0]
+    symbols_android = os.getenv('ACE_SYMBOLS_PATH', glob.glob(out_android+'/target/product/*')[0]+'/symbols/system/lib/')
+    symbols_ace = glob.glob(out_android+'/target/product/*')[0]+'/obj/ACE/build_intermediates/out/Release/lib/'
+    if len(symbols_android)>0 and symbols_android[-1]!='/':
+        symbols_android = symbols_android + '/'
+
 print 'SYMBOLS_ANDROID_PATH: ' + symbols_android,
 
 if os.path.exists("./liblgewebviewchromium.so"):
