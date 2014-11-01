@@ -43,13 +43,25 @@ if len(sys.argv)<2:
 
 
 filename = sys.argv[1]
+tombstone = filename.startswith('tombstone')
 
 addrs = {}
 for index,l in enumerate(open(filename).readlines()):
     data = l.strip().split()
     if len(data)==0:
         continue
-    if 'pc' in data:
+    if tombstone:
+        if 'pc' in data:
+            idx_pc = data.index('pc')
+            addr = data[idx_pc+1]
+            lib = os.path.basename(data[idx_pc+2])
+            if addrs.has_key(lib):
+                addrs[lib].append( [index,addr] )
+            else:
+                addrs[lib] = [[index,addr]]
+        elif 'stack' in data:
+            break
+    elif 'pc' in data:
         idx_pc = data.index('pc')
         addr = data[idx_pc+1]
         lib = os.path.basename(data[idx_pc+2])
