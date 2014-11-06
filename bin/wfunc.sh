@@ -41,6 +41,11 @@ function croot {
     gotodir "."
 }
 
+# goto ACE build output
+function droot {
+    gotodir "out*/target/product/*/obj/ACE/build_intermediates/out/Release*/"
+}
+
 function get_android_root_with_cache {
     android_root=$(get_android_root)
     cache_file=$WTOOLS_CACHE/working_android_root
@@ -85,7 +90,7 @@ function get_android_root {
     fi
     while [ "$cwd" != '/' ]
     do
-        if [[ $(basename $cwd)=='android' && -d $cwd"/vendor" ]]
+        if [[ $(basename $cwd) = 'android' && -d $cwd"/vendor" ]]
         then
             break
         fi
