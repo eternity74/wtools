@@ -32,6 +32,7 @@ Bundle 'gmarik/vundle'
 Bundle 'EasyMotion'
 Bundle 'chazy/cscope_maps'
 Bundle 'autoload_cscope.vim'
+Bundle 'Mark--Karkat'
 "Bundle 'cscope_macros.vim'
 Bundle 'Tagbar'
 Bundle 'ctrlp.vim'
@@ -91,6 +92,7 @@ map <Leader>b :MiniBufExplorer<cr>
 if has('cscope')
     if has('quickfix')
         set cscopequickfix=s-,c-,d-,i-,t-,e-
+        nnoremap <C-]>s :set cscopequickfix=s+<CR> :cs find s <C-R>=expand("<cword>")<CR><CR>
     endif
 endif
 " }}}
