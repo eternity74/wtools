@@ -7,6 +7,10 @@ for opt; do
         PACKAGENAME=com.android.chrome
         BROWSER=chrome
         ;;
+      --ace34)
+        PACKAGENAME=com.android.browser34
+        BROWSER=ace34
+        ;;
       --swe)
         PACKAGENAME=com.android.swe.browser
         BROWSER=swe

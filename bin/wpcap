@@ -1,0 +1,24 @@
+#!/bin/bash
+
+capturing=0
+control_c()
+{
+  if [ $capturing -eq 1 ]; then
+    echo -en "\n*** stopping capture ***\n"
+  fi
+}
+
+trap control_c SIGINT
+
+PATHNAME="/sdcard/Download"
+FILENAME="pcap-$(date +%Y%m%d-%H%M%S).pcap"
+
+capturing=1
+adb shell tcpdump -w $PATHNAME/$FILENAME -s 0 -i any
+
+trap - SIGINT
+mkdir -p wpcap-data
+echo "pull $FILENAME"
+adb pull $PATHNAME/$FILENAME wpcap-data/$FILENAME
+adb shell rm $PATHNAME/$FILENAME
+/cygdrive/c/Program\ Files\ \(x86\)/Wireshark/wireshark.exe pcap-data/$FILENAME > /dev/null 2>&1 &
