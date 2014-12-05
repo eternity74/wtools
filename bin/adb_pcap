@@ -21,5 +21,8 @@ mkdir -p pcap-data
 echo "pull $FILENAME"
 adb pull $PATHNAME/$FILENAME pcap-data/$FILENAME
 adb shell rm $PATHNAME/$FILENAME
-/cygdrive/c/Program\ Files\ \(x86\)/Wireshark/wireshark.exe pcap-data/$FILENAME > /dev/null 2>&1 &
-
+if [ -f /cygdrive/c/Program\ Files\ \(x86\)/Wireshark/wireshark.exe ];then
+    /cygdrive/c/Program\ Files\ \(x86\)/Wireshark/wireshark.exe pcap-data/$FILENAME > /dev/null 2>&1 &
+elif [ -f /cygdrive/c/Program\ Files/Wireshark/wireshark.exe ];then
+    /cygdrive/c/Program\ Files/Wireshark/wireshark.exe pcap-data/$FILENAME > /dev/null 2>&1 &
+fi
