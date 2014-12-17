@@ -7,6 +7,9 @@ set hlsearch
 set laststatus=2
 set et
 set hidden
+if &term == "xterm"
+    set t_Co=256
+endif
 
 " To install vundle
 " git clone https://github.com/gmarik/vundle.git  ~/.vim/bundle/vundle
