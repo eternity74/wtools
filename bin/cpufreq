@@ -1,62 +1,103 @@
-#!/bin/bash
+#!/bin/python
+import sys, time,os
+import subprocess
+import re
 
-if [ $# -gt 1 ]
-then
-    echo "usage: cpufreq [interval ms]"
-    exit
-fi
+interval_ms=1000
+if len(sys.argv)>1:
+    interval_ms=int(sys.argv[1])
 
-if [ -n "$1" ]
-then
-    interval_ms=$1
-else
-    interval_ms=1000
-fi
-interval=$(echo $interval_ms 1000 | awk '{printf "%.1f", $1/$2}')
+cmd = ["adb","root"]
+output = subprocess.check_output(cmd)
+print output
+cmd = ["adb","wait-for-device"]
+output = subprocess.check_output(cmd)
+cmd = ["adb","remount"]
+output = subprocess.check_output(cmd)
+print output
 
-adb root 1> /dev/null
-adb wait-for-device
+# check busybox
+cmd = ["adb","shell","ls","-l","/system/xbin/busybox"]
+print "checking busybox...",
+output = subprocess.check_output(cmd)
+logging = False
+if "No such file or directory" not in output:
+    print "ok"
+    print "The logs saved in /sdcard/cpufreq.log"
+    logging = True
+else:
+    print "nok (Please push busybox to /system/xbin)"
 
-cpu_num=$(adb shell cat /proc/cpuinfo | grep -c "processor")
-echo "cpu: $cpu_num"
-cpuinfo_max_freq=$(adb shell cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq)
-echo "cpuinfo_max_freq: $cpuinfo_max_freq"
-scaling_governor=$(adb shell cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
-echo "scaling_governor: $scaling_governor"
-scaling_max_freq=$(adb shell cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq)
-#echo "scaling_max_freq: $scaling_max_freq"
-echo
-echo interval=$interval_ms"ms"
-#echo interval=$interval"s"
-echo
+# retrieve cpu info
+cmd = ["adb","shell","cat","/proc/cpuinfo","|","grep","-c","\"processor\""]
+output = subprocess.check_output(cmd)
+cpu_num=int(output)
 
-#for((i=0; i<$cpu_num; i++)); do
-#    scaling_governor=$(adb shell cat /sys/devices/system/cpu/cpu$i/cpufreq/scaling_governor 2>/dev/null | tr -d '\r\n') 
-#    scaling_max_freq=$(adb shell cat /sys/devices/system/cpu/cpu$i/cpufreq/scaling_max_freq 2>/dev/null)
-#    echo "cpu[$i]: ${scaling_governor} ${scaling_max_freq}"
-#done
-#echo
+# retrieve cpu clustering information
+cpu_cluster = {}
+for i in range(cpu_num):
+    cmd = ["adb","shell","ls","-l","-d","/sys/devices/system/cpu/cpu%d/cpufreq" % i]
+    cpufreq_dir = subprocess.check_output(cmd)
+    if ">" not in cpufreq_dir:
+        cmd = ["adb","shell","cat","/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq" % i]
+        cpuinfo_max_freq = subprocess.check_output(cmd)
+        cmd = ["adb","shell","cat","/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor" % i]
+        scaling_governor = subprocess.check_output(cmd)
+        cpu_cluster[i]={'cpuinfo_max_freq':int(cpuinfo_max_freq), 'scaling_governor':scaling_governor.strip(), 'cpu':[i]}
+    else:
+        m = re.search("cpu(.)/cpufreq",cpufreq_dir)
+        link_cpu = int(m.group(1))
+        cpu_cluster[link_cpu]['cpu'].append(i)
 
-echo -e "max     cpu0    cpu1    cpu2    cpu3"
-echo -e "------- ------- ------- ------- -------"
+# make head message
+headstr = ""
+for cluster in cpu_cluster.keys():
+    headstr += "%-10s" % "max"
+    for i in cpu_cluster[cluster]['cpu']:
+        headstr += "%-10s" % ("cpu%d" %i)
 
-while true; do 
-    eval $(adb shell \
-        'echo \
-			$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq) \
-			$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq) \
-            $(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq 2>/dev/null || echo 0) \
-            $(cat /sys/devices/system/cpu/cpu1/cpufreq/cpuinfo_cur_freq 2>/dev/null || echo 0) \
-            $(cat /sys/devices/system/cpu/cpu2/cpufreq/cpuinfo_cur_freq 2>/dev/null || echo 0) \
-            $(cat /sys/devices/system/cpu/cpu3/cpufreq/cpuinfo_cur_freq 2>/dev/null || echo 0)' | \
-			awk '{ print "scaling_max_freq="$1,";cpuinfo_max_freq="$2,";cpu0="$3,";cpu1="$4,";cpu2="$5,";cpu3="$6}')
-	 if [ $scaling_max_freq == $cpuinfo_max_freq ]
-		 then
-			 echo -ne "\e[39m"
-		 else \
-			 echo -ne "\e[91m"
-	 fi
-	printf '%7d %7d %7d %7d %7d\n' "$scaling_max_freq" "$cpu0" "$cpu1" "$cpu2" "$(echo $cpu3 | tr -d '\r')"
-	
-    sleep $interval
-done
+# retrieve infomation
+#get_cpu_info_cmd = "adb shell 'echo"
+script = "#!/system/bin/sh\n"
+script += "echo '%s'\n" % headstr
+script += "while [ true ]; do\n"
+for i in range(cpu_num):
+    if cpu_cluster.has_key(i):
+        script += "cpu_max_freq[%d]=$(cat /sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq 2>/dev/null || echo 0)\n" % (i,i)
+        script += "scaling_max_freq[%d]=$(cat /sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq 2>/dev/null || echo 0)\n" % (i,i)
+        script += "cpuinfo_cur_freq[%d]=$(cat /sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_cur_freq 2>/dev/null || echo 0)\n" % (i,i)
+    else:
+        script += "cpuinfo_cur_freq[%d]=$(cat /sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_cur_freq 2>/dev/null || echo 0)\n" % (i,i)
+
+script += 'format=""\n'
+script += 'args=""\n'
+for i in range(cpu_num):
+    script += 'if [ -n "${cpu_max_freq[%d]}" ]; then\n' % i
+    script += '    if [ ${cpu_max_freq[%d]} == ${scaling_max_freq[%d]} ]; then\n' % (i,i)
+    script += '        format+="\e[39m\e[1m%-10s\e[0m\e[90m%-10s"\n'
+    script += '    else\n'
+    script += '        format+="\e[91m%-10s\e[31m%-10s"\n'
+    script += '    fi\n'
+    script += '    args+=" ${scaling_max_freq[%d]} ${cpuinfo_cur_freq[%d]}"\n' % (i,i)
+    script += "else\n"
+    script += '    format+="%-10s"\n'
+    script += '    args+=" ${cpuinfo_cur_freq[%d]}"\n' % (i)
+    script += "fi\n"
+
+script += 'printf $format $args\n'
+script += "echo \n"
+script += "sleep %.1f\n" % (interval_ms/1000)
+script += "done\n"
+
+
+
+f = open("cpufreq_d","w")
+f.write(script);
+f.close()
+
+os.system("adb push cpufreq_d /system/xbin/cpufreq")
+os.system("adb shell chmod 777 /system/xbin/cpufreq")
+if logging == True:
+    os.system("adb shell 'cpufreq | busybox tee /sdcard/cpufreq.log'")
+else:
+    os.system("adb shell 'cpufreq'")
