@@ -16,7 +16,7 @@ for opt; do
         BROWSER=swe
         ;;
       --frame)
-        CATEGORY="-e categories disabled-by-default-blink.invalidation,disabled-by-default-cc.debug,--trace-frame-viewer,--trace-ubercompositor"
+        CATEGORY="-e categories disabled-by-default-blink.invalidation,disabled-by-default-cc.debug,--trace-frame-viewer,--trace-ubercompositor,disabled-by-default-cc.debug.scheduler"
         ;;
       *)
         TIMEOUT=$opt

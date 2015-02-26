@@ -14,7 +14,7 @@ PATHNAME="/sdcard/Download"
 FILENAME="pcap-$(date +%Y%m%d-%H%M%S).pcap"
 
 capturing=1
-adb shell tcpdump -w $PATHNAME/$FILENAME -s 0 -i any
+adb shell su -c tcpdump -w $PATHNAME/$FILENAME -s 0 -i any
 
 trap - SIGINT
 mkdir -p pcap-data
