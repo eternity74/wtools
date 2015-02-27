@@ -8,8 +8,8 @@ def make_root():
     cmd = ["adb","root"]
     output = subprocess.check_output(cmd)
     print output
-    cmd = ["adb","wait-for-device"]
-    output = subprocess.check_output(cmd)
+    #cmd = ["adb","wait-for-device"]
+    #output = subprocess.check_output(cmd)
     cmd = ["adb","remount"]
     output = subprocess.check_output(cmd)
     print output
@@ -66,6 +66,7 @@ def make_device_script():
     script += "echo interval $1\n"
     script += "echo '%s'\n" % headstr
     script += "while [ true ]; do\n"
+
     for i in range(cpu_num):
         if cpu_cluster.has_key(i):
             script += "cpu_max_freq[%d]=$(cat /sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq 2>/dev/null || echo 0)\n" % (i,i)
@@ -76,6 +77,11 @@ def make_device_script():
 
     script += 'format=""\n'
     script += 'args=""\n'
+
+    cpu_list = [ cpu for k in cpu_cluster.keys() for cpu in cpu_cluster[k]['cpu'] ]
+
+    print cpu_list
+
     for i in range(cpu_num):
         script += 'if [ -n "${cpu_max_freq[%d]}" ]; then\n' % i
         script += '    if [ ${cpu_max_freq[%d]} == ${scaling_max_freq[%d]} ]; then\n' % (i,i)
