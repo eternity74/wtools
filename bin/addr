@@ -4,7 +4,8 @@ import sys
 import subprocess
 import glob
 
-cwd = os.getcwd()
+#cwd = os.getcwd()
+cwd = os.environ["PWD"]
 
 override_sympath = {}
 
@@ -18,7 +19,7 @@ home_android = cwd
 symbols_android='./'
 symbols_ace='./'
 
-if home_android != '/':
+if home_android != '/' and len(glob.glob(home_android+"/out*")) > 0:
     out_android = glob.glob(home_android+'/out*')[0]
     symbols_android = os.getenv('ACE_SYMBOLS_PATH', glob.glob(out_android+'/target/product/*')[0]+'/symbols/system/lib/')
     symbols_ace = glob.glob(out_android+'/target/product/*')[0]+'/obj/ACE/build_intermediates/out/Release/lib/'
