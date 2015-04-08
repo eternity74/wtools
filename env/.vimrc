@@ -45,6 +45,7 @@ Bundle 'Toggle-NERDTree-width'
 Bundle 'fugitive.vim'
 Bundle 'unimpaired.vim'
 Bundle 'A.vim'
+Bundle 'Shougo/neocomplcache.vim'
 "Bundle 'Shougo/unite.vim'
 "Bundle 'Shougo/neomru.vim'
 "Bundle 'bling/vim-airline'
@@ -112,6 +113,7 @@ let g:ctrlp_user_command = ['cscope.files', 'cat %s/cscope.files']
 let g:ctrlp_max_files = 0
 let g:ctrlp_lazy_update = 1
 let g:ctrlp_max_height = 20
+let g:ctrlp_use_caching = 0
 
 let g:ctrlp_set_cwd = 0
 function! s:setcwd()
@@ -139,6 +141,10 @@ autocmd BufEnter * call s:setcwd()
     let g:miniBufExplShowBufNumbers = 10 
 " }}}
 
+" NeoComplCacheEnable {{{
+let g:neocomplcache_enable_at_startup = 1
+
+" }}}
 " Whitespace & EndingSpace Highlight {{{
 highlight ExtraWhitespace ctermbg=red guibg=red
 match ExtraWhitespace /\s\+$/
