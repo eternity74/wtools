@@ -12,7 +12,7 @@ override_sympath = {}
 # Find the android root dir
 while cwd!='/':
     cwd = os.path.dirname(cwd)
-    if os.path.basename(cwd)=='android' and os.path.exists(cwd+'/dalvik'):
+    if os.path.basename(cwd)=='android':# and os.path.exists(cwd+'/dalvik'):
         break
 
 home_android = cwd
