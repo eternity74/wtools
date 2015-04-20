@@ -2,7 +2,7 @@
 import sys, time,os
 import subprocess
 import re
-
+import argparse
 
 def make_root():
     cmd = ["adb","root"]
@@ -16,9 +16,11 @@ def make_root():
 
 # check busybox
 def check_busybox():
-    cmd = ["adb","shell","ls","-l","/system/xbin/busybox"]
+    cmd = ["adb","shell","ls -l /system/xbin/busybox"]
     print "checking busybox...",
     output = subprocess.check_output(cmd)
+    if args.verbose:
+        print "[V] cmd=", cmd, " output=", output
     found = False
     if "No such file or directory" not in output:
         print "ok"
@@ -30,9 +32,12 @@ def check_busybox():
 
 def make_device_script():
     # retrieve cpu info
-    cmd = ["adb","shell","cat","/proc/cpuinfo","|","grep","-c","\"processor\""]
+    cmd = ["adb","shell","cat /proc/cpuinfo | grep -c processor"]
     output = subprocess.check_output(cmd)
+    if args.verbose:
+        print "[V] cmd=", cmd, " output=", output
     cpu_num=int(output)
+    print "%d cpu(s) detected" % cpu_num
 
     # retrieve cpu clustering information
     cpu_cluster = {}
@@ -110,8 +115,10 @@ def install_device_script():
 
 def check_device_script():
     print "script ...",
-    cmd = ["adb","shell","ls","-l","/system/xbin/cpufreq"]
+    cmd = ["adb","shell","ls -l /system/xbin/cpufreq"]
     output = subprocess.check_output(cmd)
+    if args.verbose:
+        print "[V] cmd=", cmd, " output=", output
     found = False
     if "No such file or directory" not in output:
         print "ok"
@@ -122,21 +129,24 @@ def check_device_script():
 
 
 def main():
-    interval_ms=1000.0
-    if len(sys.argv)>1:
-        interval_ms=float(sys.argv[1])
+    global args
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--verbose", "-v", action='store_true', help='verbose flag' )
+    parser.add_argument("--interval","-i", default=1000.0, type=float, help='interval ms')
+    parser.add_argument("--force","-f", action='store_true', help='always generate new script and install')
+    args = parser.parse_args()
 
     logging = check_busybox()
 
-    if check_device_script() == False:
+    if args.force or check_device_script() == False:
         make_root()
         make_device_script()
         install_device_script()
 
     if logging == True:
-        os.system("adb shell 'cpufreq %.1f| busybox tee /sdcard/cpufreq.log'" % (interval_ms/1000))
+        os.system("adb shell 'cpufreq %.1f| busybox tee /sdcard/cpufreq.log'" % (args.interval/1000))
     else:
-        os.system("adb shell 'cpufreq $.1f'"% (interval_ms/1000))
+        os.system("adb shell 'cpufreq $.1f'"% (args.interval/1000))
 
 if __name__ == "__main__":
     main()
