@@ -2,7 +2,9 @@
 active_screen=$(ls /var/run/screen/S-$USER)
 
 # delete unused viminfo
-for f in ~/.vim/.viminfo_*
+if [ -f ~/.vim/.viminfo_* ]
+then
+for f in $(ls ~/.vim/.viminfo_*)
 do
     need_to_delete=1
     for s in $active_screen
@@ -17,9 +19,12 @@ do
         rm $f
     fi
 done
+fi
 
 # delete unused cache/ctrlp
-for f in ~/.cache/ctrlp_*
+if [ -f ~/.cache/ctrlp_* ]
+then
+for f in $(ls ~/.cache/ctrlp_*)
 do
     need_to_delete=1
     for s in $active_screen
@@ -34,3 +39,4 @@ do
         rm -rf $f
     fi
 done
+fi
