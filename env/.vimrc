@@ -157,4 +157,11 @@ if !exists('s:initialized')
   let s:cwd = getcwd()
 en
 " }}}
+
+" seperate viminfo/ctrlp session for screen window {{{
+if $STY != ''
+set viminfo+=n~/.vim/.viminfo_${STY}.${WINDOW}
+let g:ctrlp_cache_dir = "~/.cache/ctrlp_$STY.$WINDOW"
+endif
+" }}}
 " vim:ft=vim:fdm=marker:ff=unix:nowrap:tabstop=4:shiftwidth=4:softtabstop=4:smarttab:shiftround:expandtab
