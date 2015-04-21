@@ -1,0 +1,36 @@
+#!/bin/bash
+active_screen=$(ls /var/run/screen/S-$USER)
+
+# delete unused viminfo
+for f in ~/.vim/.viminfo_*
+do
+    need_to_delete=1
+    for s in $active_screen
+    do
+        if [[ $f == *$s* ]]
+        then
+            need_to_delete=0
+        fi
+    done
+    if [ $need_to_delete == 1 ]
+    then
+        rm $f
+    fi
+done
+
+# delete unused cache/ctrlp
+for f in ~/.cache/ctrlp_*
+do
+    need_to_delete=1
+    for s in $active_screen
+    do
+        if [[ $f == *$s* ]]
+        then
+            need_to_delete=0
+        fi
+    done
+    if [ $need_to_delete == 1 ]
+    then
+        rm -rf $f
+    fi
+done
