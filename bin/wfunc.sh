@@ -1,5 +1,6 @@
 #/bin/bash
 source acd_func.sh
+clean_viminfo
 WTOOLS_ROOT=$(cd `dirname "${BASH_SOURCE[0]}"` && git rev-parse --show-toplevel)
 WTOOLS_CACHE=$WTOOLS_ROOT/.cache
 if [[ ! -d $WTOOLS_CACHE ]]
