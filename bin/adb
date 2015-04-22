@@ -1,2 +1,4 @@
-#!/bin/bash
-adb-remote -H $ADB_SERVER_HOST $@
+#!/usr/bin/python
+import sys,os
+command = ['adb-remote','-H',os.environ['ADB_SERVER_HOST']] + sys.argv[1:]
+os.execvp("adb-remote", command)
