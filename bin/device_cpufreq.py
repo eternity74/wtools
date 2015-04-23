@@ -25,7 +25,7 @@ def check_file(path):
 def make_root():
     rooted = False
     cmd = ["adb","root"]
-    output = subprocess.check_output(cmd)
+    output = subprocess.check_output(cmd).strip()
     if output == "restarting adbd as root" or output == "adbd is already running as root":
         rooted = True
     return rooted
