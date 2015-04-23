@@ -10,5 +10,4 @@ else:
         if p == ignore:
             continue
         if os.path.exists("%s/adb" % (p)):
-            print "%s/adb found" % p
             os.execv("%s/adb" % p, sys.argv)
