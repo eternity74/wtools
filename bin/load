@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 #url=$1
 echo "Connecting $url"
