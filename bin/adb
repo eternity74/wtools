@@ -1,13 +1,2 @@
-#!/usr/bin/python
-import os, sys
-if os.environ.has_key("ADB_SERVER_HOST"):
-    command = ['adb-remote','-H',os.environ['ADB_SERVER_HOST']] + sys.argv[1:]
-    os.execvp("adb-remote", command)
-else:
-    ignore = os.path.dirname(os.path.abspath(__file__))
-    path = os.environ["PATH"].split(":")
-    for p in path:
-        if p == ignore:
-            continue
-        if os.path.exists("%s/adb" % (p)):
-            os.execv("%s/adb" % p, sys.argv)
+#!/bin/bash
+adb-remote -H $ADB_SERVER_HOST $@
