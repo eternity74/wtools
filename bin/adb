@@ -1,2 +1,8 @@
 #!/bin/bash
-adb-remote -H $ADB_SERVER_HOST $@
+if [ -z "$ADB_SERVER_HOST" ];then
+    THIS_PATH="`dirname \"$0\"`"
+    PATH=${PATH/$THIS_PATH/}
+    adb $@
+else
+    adb-remote -H $ADB_SERVER_HOST $@
+fi
