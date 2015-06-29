@@ -95,7 +95,7 @@ map <Leader>b :MiniBufExplorer<cr>
 " cscope configuration {{{
 if has('cscope')
     if has('quickfix')
-        set cscopequickfix=s-,c-,d-,i-,t-,e-
+        set cscopequickfix=s-,c-,d-,i-,t-,e-,g-
         nnoremap <C-]>s :set cscopequickfix=s+<CR> :cs find s <C-R>=expand("<cword>")<CR><CR>
     endif
 endif
