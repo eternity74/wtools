@@ -20,9 +20,15 @@ function aroot {
         gotodir "vendor/lge/external/$aroot_prev/src"
         return
     fi
+    local old=$(shopt -p nullglob)
+    shopt -s nullglob
     aroot_dirs=( $(get_android_root_with_cache)/vendor/lge/external/chromium*/src )
     aroot_dirs2=( ${aroot_dirs[@]//\/src/} )
-    if [[ ${#aroot_dirs2[@]} -le 1 ]]; then
+    eval "$old"
+    if [[ ${#aroot_dirs2[@]} -eq 0 ]]; then
+        gotodir "vendor/lge/apps/ACE/src"
+        return
+    elif [[ ${#aroot_dirs2[@]} -le 1 ]]; then
         gotodir "vendor/lge/external/${aroot_dirs2[0]//*\//}/src"
         return
     fi
