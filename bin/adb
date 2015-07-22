@@ -4,5 +4,5 @@ if [ -z "$ADB_SERVER_HOST" ];then
     PATH=${PATH/$THIS_PATH/}
     adb $@
 else
-    adb-remote -H $ADB_SERVER_HOST $@
+    adb-remote -H $ADB_SERVER_HOST "$@"
 fi
