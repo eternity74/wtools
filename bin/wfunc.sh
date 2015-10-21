@@ -41,7 +41,11 @@ function aroot {
 
 # goto browser root
 function broot {
-    gotodir "vendor/lge/apps/Browser4_KLP"
+    if [ -d "$(get_android_root_with_cache)/vendor/lge/apps/Browser4_KLP" ]; then
+        gotodir "vendor/lge/apps/Browser4_KLP"
+    elif [ -d "$(get_android_root_with_cache)/vendor/lge/apps/LGBrowser" ]; then
+        gotodir "vendor/lge/apps/LGBrowser"
+    fi
 }
 
 # goto android root
