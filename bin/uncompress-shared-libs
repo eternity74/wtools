@@ -1,0 +1,28 @@
+#!/bin/bash
+if  [ "" == "$1" ] ; then
+    echo "Uncompress sharedlibs in apk and zipalign"
+    echo 'usage:' ${0##*/} 'apkname'
+    exit 1
+fi
+
+ZIPALIGN=$ANDROID_HOME/build-tools/23.0.0/zipalign
+if [ ! -n $ZIPALIGN ] ; then
+    echo "zipalign is not found"
+    exit 1
+fi
+
+name=$(basename "$1")-uncompressedlibs.apk
+cp $1 $name
+rm -rf uncompressedlibs
+mkdir uncompressedlibs
+unzip $name '*.so' -d uncompressedlibs
+zip -d $name 'lib/*.so'
+(cd uncompressedlibs && zip -D -r -0 ../$name lib)
+rm -rf uncompressedlibs
+
+$ZIPALIGN -f -p 4 $name $name.aligned
+rm $name
+mv $name.aligned $name
+
+
+
