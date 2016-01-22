@@ -165,4 +165,14 @@ set viminfo+=n~/.vim/.viminfo_${STY}.${WINDOW}
 let g:ctrlp_cache_dir = "~/.cache/ctrlp_$STY.$WINDOW"
 endif
 " }}}
+"
+" mouse configuration {{{
+set mouse=a
+
+nmap <F3> :set nonu<CR> :set mouse=r<CR>
+nmap <F4> :set nu<CR> :set mouse=a<CR>
+
+map <ScrollWheelUp> <C-Y>
+map <ScrollWheelDown> <C-E>
+" }}}
 " vim:ft=vim:fdm=marker:ff=unix:nowrap:tabstop=4:shiftwidth=4:softtabstop=4:smarttab:shiftround:expandtab
