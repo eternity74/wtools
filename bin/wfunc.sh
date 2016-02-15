@@ -1,8 +1,8 @@
 #/bin/bash
 source acd_func.sh
 clean_viminfo
-WTOOLS_ROOT=$(cd `dirname "${BASH_SOURCE[0]}"` && git rev-parse --show-toplevel)
-WTOOLS_CACHE=$WTOOLS_ROOT/.cache
+export WTOOLS_ROOT=$(cd `dirname "${BASH_SOURCE[0]}"` && git rev-parse --show-toplevel)
+export WTOOLS_CACHE=$WTOOLS_ROOT/.cache
 if [[ ! -d $WTOOLS_CACHE ]]
 then
     mkdir $WTOOLS_CACHE
@@ -20,9 +20,15 @@ function aroot {
         gotodir "vendor/lge/external/$aroot_prev/src"
         return
     fi
+    local old=$(shopt -p nullglob)
+    shopt -s nullglob
     aroot_dirs=( $(get_android_root_with_cache)/vendor/lge/external/chromium*/src )
     aroot_dirs2=( ${aroot_dirs[@]//\/src/} )
-    if [[ ${#aroot_dirs2[@]} -le 1 ]]; then
+    eval "$old"
+    if [[ ${#aroot_dirs2[@]} -eq 0 ]]; then
+        gotodir "vendor/lge/apps/ACE/src"
+        return
+    elif [[ ${#aroot_dirs2[@]} -le 1 ]]; then
         gotodir "vendor/lge/external/${aroot_dirs2[0]//*\//}/src"
         return
     fi
@@ -35,7 +41,11 @@ function aroot {
 
 # goto browser root
 function broot {
-    gotodir "vendor/lge/apps/Browser4_KLP"
+    if [ -d "$(get_android_root_with_cache)/vendor/lge/apps/Browser4_KLP" ]; then
+        gotodir "vendor/lge/apps/Browser4_KLP"
+    elif [ -d "$(get_android_root_with_cache)/vendor/lge/apps/LGBrowser" ]; then
+        gotodir "vendor/lge/apps/LGBrowser"
+    fi
 }
 
 # goto android root

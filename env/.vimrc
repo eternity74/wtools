@@ -35,6 +35,7 @@ Bundle 'gmarik/vundle'
 Bundle 'EasyMotion'
 Bundle 'chazy/cscope_maps'
 Bundle 'autoload_cscope.vim'
+Bundle 'gtags.vim'
 Bundle 'Mark--Karkat'
 "Bundle 'cscope_macros.vim'
 Bundle 'Tagbar'
@@ -95,7 +96,7 @@ map <Leader>b :MiniBufExplorer<cr>
 " cscope configuration {{{
 if has('cscope')
     if has('quickfix')
-        set cscopequickfix=s-,c-,d-,i-,t-,e-
+        set cscopequickfix=s-,c-,d-,i-,t-,e-,g-
         nnoremap <C-]>s :set cscopequickfix=s+<CR> :cs find s <C-R>=expand("<cword>")<CR><CR>
     endif
 endif
@@ -163,5 +164,15 @@ if $STY != ''
 set viminfo+=n~/.vim/.viminfo_${STY}.${WINDOW}
 let g:ctrlp_cache_dir = "~/.cache/ctrlp_$STY.$WINDOW"
 endif
+" }}}
+"
+" mouse configuration {{{
+set mouse=a
+
+nmap <F3> :set nonu<CR> :set mouse=r<CR>
+nmap <F4> :set nu<CR> :set mouse=a<CR>
+
+map <ScrollWheelUp> <C-Y>
+map <ScrollWheelDown> <C-E>
 " }}}
 " vim:ft=vim:fdm=marker:ff=unix:nowrap:tabstop=4:shiftwidth=4:softtabstop=4:smarttab:shiftround:expandtab

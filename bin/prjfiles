@@ -1,6 +1,6 @@
 #!/bin/bash
 ARGS='-iname *.cpp -o -iname *.cc -o -iname *.h -o -iname *.java'
-ADDITIONAL_FILES="*.mk *.xml *.ninja *.idl *.gypi *.gyp *.in"
+ADDITIONAL_FILES="*.mk *.xml *.ninja *.idl *.gypi *.gyp *.in `echo $PRJDIR_EXTS`"
 PRJDIRS=".prjdirs"
 set -f
 for name in $ADDITIONAL_FILES
