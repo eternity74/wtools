@@ -22,4 +22,4 @@ if [[ -n "$STY" ]]; then
   # Prevent PROMPT_COMMAND from being overwritten by android's choosecombo
   STAY_OFF_MY_LAWN=1
 fi
-
+alias adb='~/wtools/bin/adb'
