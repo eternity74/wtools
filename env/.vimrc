@@ -39,7 +39,8 @@ Bundle 'gtags.vim'
 Bundle 'Mark--Karkat'
 "Bundle 'cscope_macros.vim'
 Bundle 'Tagbar'
-Bundle 'ctrlp.vim'
+"Bundle 'ctrlp.vim'
+Bundle 'kien/ctrlp.vim'
 Bundle 'scrooloose/nerdtree'
 Bundle 'Toggle-NERDTree-width'
 
@@ -115,6 +116,7 @@ let g:ctrlp_max_files = 0
 let g:ctrlp_lazy_update = 1
 let g:ctrlp_max_height = 20
 let g:ctrlp_use_caching = 0
+let g:ctrlp_match_window = 'results:100' " overcome limit imposed by max height
 
 let g:ctrlp_set_cwd = 0
 function! s:setcwd()
