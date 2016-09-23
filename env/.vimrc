@@ -40,7 +40,7 @@ Bundle 'Mark--Karkat'
 "Bundle 'cscope_macros.vim'
 Bundle 'Tagbar'
 "Bundle 'ctrlp.vim'
-Bundle 'kien/ctrlp.vim'
+Bundle 'ctrlpvim/ctrlp.vim'
 Bundle 'scrooloose/nerdtree'
 Bundle 'Toggle-NERDTree-width'
 
