@@ -1,0 +1,154 @@
+#!/usr/bin/python
+
+import SocketServer
+from socket import *
+import thread,time,os,sys
+import select, asyncore
+
+debug = False
+def log_msg(msg):
+    if debug:
+        print msg
+
+class MyTCPHandler(SocketServer.BaseRequestHandler):
+
+    def handle(self):
+        # self.request is the TCP socket connected to the client
+        while True:
+            head = self.request.recv(4)
+            if not head:
+                return
+            elif len(head) != 4:
+                continue
+            l = int(head,16)
+            log_msg("{} {} wrote: {}".format(id(self),self.client_address[0],l))
+            self.command = self.request.recv(l).split(":")
+            log_msg("{} {}".format(id(self),self.command))
+            if  self.command[0] == 'host':
+                self.handleHostCommand()
+            elif self.command[0] == 'client':
+                self.handleClientCommand()
+            elif self.command[0] == 'shell':
+                self.handleShellCommand()
+            elif self.command[0] == 'localabstract':
+                self.handleLocalabstractCommand()
+                return
+            else:
+                log_msg("{} unhandled {}".format(id(self), self.command))
+
+    def handleHostCommand(self):
+        try:
+            cmd = self.command[1]
+            method = getattr(self,cmd)
+            method()
+        except AttributeError:
+            log_msg("{} not implemented {}".format(id(self), self.command))
+            #raise NotImplementedError("Class `{}` does not implement `{}`".format(self.__class__.__name__, method))
+
+    def handleShellCommand(self):
+        SEP = "======== output separator ========"
+
+        net_unix = """
+Num       RefCount Protocol Flags    Type St Inode Path
+00000000: 00000002 00000000 00010000 0001 01 331813 /dev/socket/zygote
+00000000: 00000002 00000000 00010000 0001 01 358606 @webos_devtools_remote_0
+"""
+        ps = """USER PID PPID VSIZE RSS WCHAN PC ? NAME
+3 0 1 2 3 4 5 6 webos
+"""
+        user = """
+Users:
+  UserInfo{0:Test User:13} serialNo=0
+    Created: <unknown>
+    Last logged in: +17m18s871ms ago
+  UserInfo{10:User with : (colon):10} serialNo=10
+    Created: +3d4h35m1s139ms ago
+    Last logged in: +17m26s287ms ago
+"""
+        if 'proc/net/unix' in self.command[1]:
+            out = "webOS\n" + \
+                  SEP + "\n" + \
+                  "mStable=(0,50)-(720,1280)\n" + \
+                  SEP + "\n" + \
+                  ps+"\n" + \
+                  SEP + "\n" + \
+                  net_unix+"\n" + \
+                  SEP + "\n" + \
+                  user+"\n"
+            self.sendOkay()
+            self.responseCommand(out)
+
+    def handleLocalabstractCommand(self): 
+        self.sendOkay()
+        device_socket = socket(AF_INET, SOCK_STREAM)
+        #device_socket.connect(("tv",9998))
+
+        #device_socket.connect(("localhost",9998))
+        device_socket.connect((target_name,target_port))
+        toread = [self.request, device_socket]
+        self.request.setblocking(False)
+        device_socket.setblocking(False)
+        out_buffer = []
+        in_buffer = []
+        while True:
+            rready,wready,err = select.select( toread, [], [] )
+            for s in rready:
+                if s == self.request:
+                    _out = self.request.recv(32*1024)
+                    if not _out:
+                        return
+                    elif len(_out) > 0:
+                        #print "{} >>> {}".format(id(self) , _out)
+                        device_socket.sendall(_out)
+                if s == device_socket:
+                    _in = device_socket.recv(32*1024)
+                    if not _in:
+                        return
+                    elif len(_in) > 0:
+                        #print "{} <<< {}".format(id(self) , _in)
+                        self.request.sendall(_in)
+
+    def sendOkay(self):
+        self.request.sendall("OKAY")
+
+    def devices(self):
+        self.sendOkay()
+        self.responseCommand('0123456789\twebOSdevice')
+
+    def transport(self):
+        self.sendOkay()
+
+
+    def responseCommand(self,data):
+        log_msg("{} command:{} respond:{}".format(id(self), self.command, data))
+        l = len(data)
+        out = '%04x%s' % (l,data)
+        self.request.sendall(out)
+
+target_name = "tv"
+target_port = 9998
+if __name__ == "__main__":
+    conf = "_wdb.conf"
+    try:
+        confpath = os.path.dirname(sys.argv[0])+"/"+conf
+        with open(confpath) as f:
+            d = f.read().strip()
+            t = d.split(" ")
+            if len(t) == 1:
+                target_name = t[0]
+            elif len(t) == 2:
+                (target_name, target_port) = t
+    except IOError:
+        print "make {} file for target ip and port".format(confpath)
+        print "ex)"
+        print "192.168.0.1 9998"
+
+    print "using {}:{}".format(target_name, target_port)
+    HOST, PORT = "localhost", 5037
+
+    # Create the server, binding to localhost on port 9999
+    server = SocketServer.ThreadingTCPServer((HOST, PORT), MyTCPHandler)
+
+    # Activate the server; this will keep running until you
+    # interrupt the program with Ctrl-C
+    server.serve_forever()
