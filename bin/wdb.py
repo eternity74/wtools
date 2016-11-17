@@ -1,11 +1,18 @@
 #!/usr/bin/python
 
+from httplib import HTTPResponse
 import SocketServer
 from socket import *
 import thread,time,os,sys
 import select, asyncore
 import argparse
+import json
+import StringIO
 
+#find branch base version on http://omahaproxy.appspot.com/
+# for 53.0.2785.94 branch-base-version 68623971be0cfc492a2cb0427d7f478e7b214c24
+inspect_url = "http://chrome-devtools-frontend.appspot.com/serve_rev/@68623971be0cfc492a2cb0427d7f478e7b214c24/inspector.html"
+#inspect_url = "http://chrome-devtools-frontend.appspot.com/serve_rev/@68623971be0cfc492a2cb0427d7f478e7b214c24/inspector.html"
 def log_msg(msg):
     if args.debug:
         print msg
@@ -81,32 +88,61 @@ Users:
     def handleLocalabstractCommand(self): 
         self.sendOkay()
         device_socket = socket(AF_INET, SOCK_STREAM)
-        #device_socket.connect(("tv",9998))
 
         #device_socket.connect(("localhost",9998))
         device_socket.connect((target_name,target_port))
-        toread = [self.request, device_socket]
-        self.request.setblocking(False)
-        device_socket.setblocking(False)
-        out_buffer = []
-        in_buffer = []
+
+        http_mode = True
+
         while True:
-            rready,wready,err = select.select( toread, [], [] )
-            for s in rready:
-                if s == self.request:
-                    _out = self.request.recv(32*1024)
-                    if not _out:
-                        return
-                    elif len(_out) > 0:
-                        log_msg ("{} >>> {}".format(id(self) , _out))
-                        device_socket.sendall(_out)
-                if s == device_socket:
-                    _in = device_socket.recv(32*1024)
-                    if not _in:
-                        return
-                    elif len(_in) > 0:
-                        log_msg ("{} <<< {}".format(id(self) , _in))
-                        self.request.sendall(_in)
+            if http_mode: # http mode
+                _to_device = self.request.recv(32*1024)
+                if not _to_device:
+                    return
+                device_socket.sendall(_to_device)
+                msg = device_socket.recv(32*1024)
+                (status,headers,body) = self.parseHTTPMessage(msg)
+                # 1. modify devtoolsFrontendUrl
+                if 'devtoolsFrontendUrl' in body:
+                    jdata = json.loads(body)
+                    for d in jdata:
+                        if d.has_key('devtoolsFrontendUrl'):
+                            d['devtoolsFrontendUrl'] = d['devtoolsFrontendUrl'].replace("/devtools/inspector.html", inspect_url)
+                    body = json.dumps(jdata)
+                # 2. make response
+                _to_chrome_out = status + "\r\n"
+                for h,v in headers:
+                    if h == "Content-Length":
+                        v = len(body)
+                    _to_chrome_out += "{}: {}\r\n".format (h,v)
+                _to_chrome_out += "\r\n"+body
+                print _to_chrome_out
+                # 3. send the response
+                self.request.sendall(_to_chrome_out)
+                if status == "HTTP/1.1 101 WebSocket Protocol Handshake":
+                    http_mode = False # upgrading to websocket mode
+                    self.request.setblocking(False)
+                    device_socket.setblocking(False)
+            else: # websocket mode - just connection each peer and let them communicate with each other
+                toread = [self.request, device_socket]
+                out_buffer = []
+                in_buffer = []
+                rready,wready,err = select.select( toread, [], [] )
+                for s in rready:
+                    if s == self.request:
+                        _out = self.request.recv(32*1024)
+                        if not _out:
+                            return
+                        elif len(_out) > 0:
+                            log_msg ("{} >>> {}".format(id(self) , _out))
+                            device_socket.sendall(_out)
+                    if s == device_socket:
+                        _in = device_socket.recv(32*1024)
+                        if not _in:
+                            return
+                        elif len(_in) > 0:
+                            log_msg ("{} <<< {}".format(id(self) , _in))
+                            self.request.sendall(_in)
 
     def sendOkay(self):
         self.request.sendall("OKAY")
@@ -124,6 +160,17 @@ Users:
         l = len(data)
         out = '%04x%s' % (l,data)
         self.request.sendall(out)
+    def parseHTTPMessage(self,msg):
+        buf = StringIO.StringIO(msg)
+        status = buf.readline().strip()
+        headers = []
+        while True:
+            line = buf.readline()
+            if line == "\r\n":
+                break
+            headers.append( line.strip().split(":") )
+        body = buf.read()
+        return (status, headers, body)
 
 target_name, target_port = ("192.168.0.10", 9998)
 if __name__ == "__main__":
