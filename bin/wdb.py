@@ -4,10 +4,10 @@ import SocketServer
 from socket import *
 import thread,time,os,sys
 import select, asyncore
+import argparse
 
-debug = False
 def log_msg(msg):
-    if debug:
+    if args.debug:
         print msg
 
 class MyTCPHandler(SocketServer.BaseRequestHandler):
@@ -98,14 +98,14 @@ Users:
                     if not _out:
                         return
                     elif len(_out) > 0:
-                        #print "{} >>> {}".format(id(self) , _out)
+                        log_msg ("{} >>> {}".format(id(self) , _out))
                         device_socket.sendall(_out)
                 if s == device_socket:
                     _in = device_socket.recv(32*1024)
                     if not _in:
                         return
                     elif len(_in) > 0:
-                        #print "{} <<< {}".format(id(self) , _in)
+                        log_msg ("{} <<< {}".format(id(self) , _in))
                         self.request.sendall(_in)
 
     def sendOkay(self):
@@ -125,23 +125,37 @@ Users:
         out = '%04x%s' % (l,data)
         self.request.sendall(out)
 
-target_name = "tv"
-target_port = 9998
+target_name, target_port = ("192.168.0.10", 9998)
 if __name__ == "__main__":
     conf = "_wdb.conf"
-    try:
+    global args
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", "-d", action='store_true', help='logging for debug' )
+    parser.add_argument("--show", "-s", action='store_true', help='show config' )
+    args = parser.parse_args()
+
+    confpath = conf
+    if os.path.dirname(sys.argv[0]):
         confpath = os.path.dirname(sys.argv[0])+"/"+conf
+    try:
         with open(confpath) as f:
             d = f.read().strip()
+            if args.show:
+                print "cat {}".format(confpath)
+                print d
             t = d.split(" ")
             if len(t) == 1:
                 target_name = t[0]
             elif len(t) == 2:
-                (target_name, target_port) = t
+                (target_name, target_port) = (t[0],int(t[1]))
     except IOError:
         print "make {} file for target ip and port".format(confpath)
         print "ex)"
-        print "192.168.0.1 9998"
+        print "echo '192.168.0.1 9998' > _wdb.conf"
+
+    if args.show:
+        sys.exit(1)
 
     print "using {}:{}".format(target_name, target_port)
     HOST, PORT = "localhost", 5037
