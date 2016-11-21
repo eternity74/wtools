@@ -116,7 +116,7 @@ Users:
                         v = len(body)
                     _to_chrome_out += "{}: {}\r\n".format (h,v)
                 _to_chrome_out += "\r\n"+body
-                print _to_chrome_out
+                #print _to_chrome_out
                 # 3. send the response
                 self.request.sendall(_to_chrome_out)
                 if status == "HTTP/1.1 101 WebSocket Protocol Handshake":
@@ -180,6 +180,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", "-d", action='store_true', help='logging for debug' )
     parser.add_argument("--show", "-s", action='store_true', help='show config' )
+    parser.add_argument("--target_ip", "-ti", action='store', help='overide target-ip', default=None)
+    parser.add_argument("--target_port", "-tp", action='store', help='overide target-port', default=None)
     args = parser.parse_args()
 
     confpath = conf
@@ -197,14 +199,19 @@ if __name__ == "__main__":
             elif len(t) == 2:
                 (target_name, target_port) = (t[0],int(t[1]))
     except IOError:
-        print "make {} file for target ip and port".format(confpath)
+        print "Need to setup target ip and port"
         print "ex)"
-        print "echo '192.168.0.1 9998' > _wdb.conf"
+        print "echo '192.168.0.1 9998' > {}".format(confpath)
 
+    if args.target_ip != None:
+        target_name = args.target_ip
+    if args.target_port != None:
+        target_port = args.target_port
     if args.show:
         sys.exit(1)
 
-    print "using {}:{}".format(target_name, target_port)
+    print "------------------------------------------------------"
+    print "STARTED: target {}:{}".format(target_name, target_port)
     HOST, PORT = "localhost", 5037
 
     # Create the server, binding to localhost on port 9999
