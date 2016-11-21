@@ -8,29 +8,39 @@ import select, asyncore
 import argparse
 import json
 import StringIO
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+ch = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+
+logger.addHandler(ch)
+
+server_running=False
 
 #find branch base version on http://omahaproxy.appspot.com/
 # for 53.0.2785.94 branch-base-version 68623971be0cfc492a2cb0427d7f478e7b214c24
 inspect_url = "http://chrome-devtools-frontend.appspot.com/serve_rev/@68623971be0cfc492a2cb0427d7f478e7b214c24/inspector.html"
 #inspect_url = "http://chrome-devtools-frontend.appspot.com/serve_rev/@68623971be0cfc492a2cb0427d7f478e7b214c24/inspector.html"
-def log_msg(msg):
-    if args.debug:
-        print msg
-
 class MyTCPHandler(SocketServer.BaseRequestHandler):
 
     def handle(self):
         # self.request is the TCP socket connected to the client
         while True:
+            if server_running==False:
+                return
             head = self.request.recv(4)
             if not head:
                 return
             elif len(head) != 4:
                 continue
             l = int(head,16)
-            log_msg("{} {} wrote: {}".format(id(self),self.client_address[0],l))
+            logger.debug("%s %s wrote: %d", id(self), self.client_address[0], l)
             self.command = self.request.recv(l).split(":")
-            log_msg("{} {}".format(id(self),self.command))
+            logger.debug("%s %s", id(self), self.command)
             if  self.command[0] == 'host':
                 self.handleHostCommand()
             elif self.command[0] == 'client':
@@ -41,7 +51,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                 self.handleLocalabstractCommand()
                 return
             else:
-                log_msg("{} unhandled {}".format(id(self), self.command))
+                logger.debug("%s unhandled %s",id(self), self.command)
 
     def handleHostCommand(self):
         try:
@@ -49,7 +59,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             method = getattr(self,cmd)
             method()
         except AttributeError:
-            log_msg("{} not implemented {}".format(id(self), self.command))
+            logger.debug("%s not implemented %s",id(self), self.command)
             #raise NotImplementedError("Class `{}` does not implement `{}`".format(self.__class__.__name__, method))
 
     def handleShellCommand(self):
@@ -95,6 +105,8 @@ Users:
         http_mode = True
 
         while True:
+            if server_running==False:
+                return
             if http_mode: # http mode
                 _to_device = self.request.recv(32*1024)
                 if not _to_device:
@@ -134,14 +146,14 @@ Users:
                         if not _out:
                             return
                         elif len(_out) > 0:
-                            log_msg ("{} >>> {}".format(id(self) , _out))
+                            logger.debug("%s>>> %s",id(self) , _out)
                             device_socket.sendall(_out)
                     if s == device_socket:
                         _in = device_socket.recv(32*1024)
                         if not _in:
                             return
                         elif len(_in) > 0:
-                            log_msg ("{} <<< {}".format(id(self) , _in))
+                            logger.debug("%s<<< %s",id(self) , _in)
                             self.request.sendall(_in)
 
     def sendOkay(self):
@@ -156,7 +168,7 @@ Users:
 
 
     def responseCommand(self,data):
-        log_msg("{} command:{} respond:{}".format(id(self), self.command, data))
+        logger.debug("%s command:%s respond:%s",id(self), self.command, data)
         l = len(data)
         out = '%04x%s' % (l,data)
         self.request.sendall(out)
@@ -209,9 +221,11 @@ if __name__ == "__main__":
         target_port = args.target_port
     if args.show:
         sys.exit(1)
+    if args.debug:
+        logger.setLevel(logging.DEBUG)
 
-    print "------------------------------------------------------"
-    print "STARTED: target {}:{}".format(target_name, target_port)
+    print("------------------------------------------------------")
+    print("STARTED: target {}:{}".format(target_name, target_port))
     HOST, PORT = "localhost", 5037
 
     # Create the server, binding to localhost on port 9999
@@ -219,4 +233,10 @@ if __name__ == "__main__":
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C
-    server.serve_forever()
+    server_running = True
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        logging.info("exiting...")
+        server.server_close()
+    server_running = False
