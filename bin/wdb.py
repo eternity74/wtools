@@ -9,6 +9,7 @@ import argparse
 import json
 import StringIO
 import logging
+from threading import current_thread
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -25,22 +26,30 @@ server_running=False
 # for 53.0.2785.94 branch-base-version 68623971be0cfc492a2cb0427d7f478e7b214c24
 inspect_url = "http://chrome-devtools-frontend.appspot.com/serve_rev/@68623971be0cfc492a2cb0427d7f478e7b214c24/inspector.html"
 #inspect_url = "http://chrome-devtools-frontend.appspot.com/serve_rev/@68623971be0cfc492a2cb0427d7f478e7b214c24/inspector.html"
+
+running_threads = []
 class MyTCPHandler(SocketServer.BaseRequestHandler):
 
+    def getThreadName(self):
+        return current_thread().getName()
+
     def handle(self):
+        running_threads.append(current_thread())
+        logger.debug("runnging thread %s",running_threads)
+        logger.debug("%s is started", self.getThreadName())
         # self.request is the TCP socket connected to the client
         while True:
             if server_running==False:
-                return
+                break
             head = self.request.recv(4)
             if not head:
-                return
+               break
             elif len(head) != 4:
                 continue
             l = int(head,16)
-            logger.debug("%s %s wrote: %d", id(self), self.client_address[0], l)
+            logger.debug("%s %s wrote: %d", self.getThreadName(), self.client_address[0], l)
             self.command = self.request.recv(l).split(":")
-            logger.debug("%s %s", id(self), self.command)
+            logger.debug("%s %s", self.getThreadName(), self.command)
             if  self.command[0] == 'host':
                 self.handleHostCommand()
             elif self.command[0] == 'client':
@@ -49,9 +58,11 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
                 self.handleShellCommand()
             elif self.command[0] == 'localabstract':
                 self.handleLocalabstractCommand()
-                return
+                break
             else:
-                logger.debug("%s unhandled %s",id(self), self.command)
+                logger.debug("%s unhandled %s",self.getThreadName(), self.command)
+        logger.debug("[%s] is terminated",self.getThreadName())
+        running_threads.remove(current_thread())
 
     def handleHostCommand(self):
         try:
@@ -59,7 +70,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
             method = getattr(self,cmd)
             method()
         except AttributeError:
-            logger.debug("%s not implemented %s",id(self), self.command)
+            logger.debug("%s not implemented %s",self.getThreadName(), self.command)
             #raise NotImplementedError("Class `{}` does not implement `{}`".format(self.__class__.__name__, method))
 
     def handleShellCommand(self):
@@ -101,59 +112,70 @@ Users:
 
         #device_socket.connect(("localhost",9998))
         device_socket.connect((target_name,target_port))
+        self.request.setblocking(False)
+        device_socket.setblocking(False)
 
         http_mode = True
 
         while True:
             if server_running==False:
+                logger.debug("%s server is shutdown", self.getThreadName())
                 return
             if http_mode: # http mode
-                _to_device = self.request.recv(32*1024)
-                if not _to_device:
-                    return
-                device_socket.sendall(_to_device)
-                msg = device_socket.recv(32*1024)
-                (status,headers,body) = self.parseHTTPMessage(msg)
-                # 1. modify devtoolsFrontendUrl
-                if 'devtoolsFrontendUrl' in body:
-                    jdata = json.loads(body)
-                    for d in jdata:
-                        if d.has_key('devtoolsFrontendUrl'):
-                            d['devtoolsFrontendUrl'] = d['devtoolsFrontendUrl'].replace("/devtools/inspector.html", inspect_url)
-                    body = json.dumps(jdata)
-                # 2. make response
-                _to_chrome_out = status + "\r\n"
-                for h,v in headers:
-                    if h == "Content-Length":
-                        v = len(body)
-                    _to_chrome_out += "{}: {}\r\n".format (h,v)
-                _to_chrome_out += "\r\n"+body
-                #print _to_chrome_out
-                # 3. send the response
-                self.request.sendall(_to_chrome_out)
-                if status == "HTTP/1.1 101 WebSocket Protocol Handshake":
-                    http_mode = False # upgrading to websocket mode
-                    self.request.setblocking(False)
-                    device_socket.setblocking(False)
-            else: # websocket mode - just connection each peer and let them communicate with each other
                 toread = [self.request, device_socket]
-                out_buffer = []
-                in_buffer = []
-                rready,wready,err = select.select( toread, [], [] )
+                rready,wready,err = select.select( toread, [], [], 1 )
                 for s in rready:
                     if s == self.request:
                         _out = self.request.recv(32*1024)
                         if not _out:
                             return
                         elif len(_out) > 0:
-                            logger.debug("%s>>> %s",id(self) , _out)
+                            logger.debug("%s>>> %s",self.getThreadName() , _out)
                             device_socket.sendall(_out)
                     if s == device_socket:
                         _in = device_socket.recv(32*1024)
                         if not _in:
                             return
                         elif len(_in) > 0:
-                            logger.debug("%s<<< %s",id(self) , _in)
+                            (status,headers,body) = self.parseHTTPMessage(_in)
+                            # 1. modify devtoolsFrontendUrl
+                            if 'devtoolsFrontendUrl' in body:
+                                jdata = json.loads(body)
+                                for d in jdata:
+                                    if d.has_key('devtoolsFrontendUrl'):
+                                        d['devtoolsFrontendUrl'] = d['devtoolsFrontendUrl'].replace("/devtools/inspector.html", inspect_url)
+                                body = json.dumps(jdata)
+                            # 2. make response
+                            _to_chrome_out = status + "\r\n"
+                            for h,v in headers:
+                                if h == "Content-Length":
+                                    v = len(body)
+                                _to_chrome_out += "{}: {}\r\n".format (h,v)
+                            _to_chrome_out += "\r\n"+body
+                            logger.debug("%s<<< %s",self.getThreadName() , _to_chrome_out)
+                            # 3. send the response
+                            self.request.sendall(_to_chrome_out)
+                        if status == "HTTP/1.1 101 WebSocket Protocol Handshake":
+                            http_mode = False # upgrading to websocket mode
+            else: # websocket mode - just connection each peer and let them communicate with each other
+                toread = [self.request, device_socket]
+                out_buffer = []
+                in_buffer = []
+                rready,wready,err = select.select( toread, [], [], 1 )
+                for s in rready:
+                    if s == self.request:
+                        _out = self.request.recv(32*1024)
+                        if not _out:
+                            return
+                        elif len(_out) > 0:
+                            logger.debug("%s>>> %s",self.getThreadName() , _out)
+                            device_socket.sendall(_out)
+                    if s == device_socket:
+                        _in = device_socket.recv(32*1024)
+                        if not _in:
+                            return
+                        elif len(_in) > 0:
+                            logger.debug("%s<<< %s",self.getThreadName() , _in)
                             self.request.sendall(_in)
 
     def sendOkay(self):
@@ -168,7 +190,7 @@ Users:
 
 
     def responseCommand(self,data):
-        logger.debug("%s command:%s respond:%s",id(self), self.command, data)
+        logger.debug("%s command:%s respond:%s",self.getThreadName(), self.command, data)
         l = len(data)
         out = '%04x%s' % (l,data)
         self.request.sendall(out)
