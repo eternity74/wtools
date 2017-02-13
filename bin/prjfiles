@@ -1,16 +1,46 @@
 #!/bin/bash
-ARGS='-iname *.cpp -o -iname *.cc -o -iname *.h -o -iname *.java'
-ADDITIONAL_FILES="*.mk *.xml *.ninja *.idl *.gypi *.gyp *.in `echo $PRJDIR_EXTS`"
-PRJDIRS=".prjdirs"
 set -f
-for name in $ADDITIONAL_FILES
+# READ ARGS PARSE OPTIONS
+# $ADDITIONAL_EXTS : custom extension by given -e "*.py *.html" (for example)
+# $SEARCH_FODLERS : search file list on this fodlers
+while [[ $# -gt 0 ]]
 do
-    ARGS="$ARGS -o -iname $name"
+key="$1"
+case $key in
+    -e|--extension)
+    ADDITIONAL_EXTS="$2"
+    shift
+    ;;
+    *)
+    if [ -z $SEARCH_FOLDERS ]; then
+        SEARCH_FOLDERS="$key"
+    else
+        SEARCH_FOLDERS="$SEARCH_FOLDERS $key"
+    fi
+    ;;
+esac
+shift
 done
-if [ $# -ne 0 ]; then
+
+# SEARCHING EXTS
+SEARCHING_EXTS="*.cpp *.cc *.h *.java *.mk *.xml *.ninja *.idl *.gypi *.gyp *.in $ADDITIONAL_EXTS"
+PRJDIRS=".prjdirs"
+echo "searching extstions:" $SEARCHING_EXTS
+echo "search_folders:" $SEARCH_FOLDERS
+
+for name in $SEARCHING_EXTS
+do
+    if [ -z "$ARGS" ]; then
+        ARGS="-iname $name"
+    else
+        ARGS="$ARGS -o -iname $name"
+    fi
+done
+if [ ${#SEARCH_FOLDERS} -ne 0 ]; then
     DIRS=""
     CWD=$(pwd)
-    for DIR in $@
+    #for DIR in $@
+    for DIR in ${SEARCH_FOLDERS}
     do
         if [ -d ${DIR%/} ];then
             echo ${DIR%/} >> $PRJDIRS
@@ -36,4 +66,3 @@ echo "Listing files in $DIRS"
 find $DIRS $ARGS | grep -v 'unittest' > cscope.files
 
 sort -u cscope.files -o cscope.files
-
