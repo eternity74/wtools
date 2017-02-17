@@ -162,9 +162,15 @@ en
 " }}}
 
 " seperate viminfo/ctrlp session for screen window {{{
-if $STY != ''
+if filereadable("./.prjdirs")
+set viminfo+=n./.viminfo
+let g:ctrlp_cache_dir = "./.ctrlp_cache"
+elseif $STY != ''
 set viminfo+=n~/.vim/.viminfo_${STY}.${WINDOW}
 let g:ctrlp_cache_dir = "~/.cache/ctrlp_$STY.$WINDOW"
+elseif $TMUX != ''
+set viminfo+=n~/.vim/.viminfo_${TMUX_UNIQUE}
+let g:ctrlp_cache_dir = "~/.cache/ctrlp_$TMUX_UNIQUE"
 endif
 " }}}
 "

@@ -22,4 +22,7 @@ if [[ -n "$STY" ]]; then
   # Prevent PROMPT_COMMAND from being overwritten by android's choosecombo
   STAY_OFF_MY_LAWN=1
 fi
+if [[ -n "$TMUX" ]]; then
+  export TMUX_UNIQUE=`tmux display-message -p "#S#{window_id}#D"`
+fi
 alias adb='~/wtools/bin/adb'
