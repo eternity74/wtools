@@ -2,7 +2,7 @@
 export WTOOLS_ROOT=$(cd `dirname "${BASH_SOURCE[0]}"` && git rev-parse --show-toplevel)
 export WTOOLS_CACHE=$WTOOLS_ROOT/.cache
 source $WTOOLS_ROOT/bin/acd_func.sh
-$WTOOLS_ROOT/bin/clean_viminfo
+#$WTOOLS_ROOT/bin/clean_viminfo #TODO: need to fix for tmux
 if [[ ! -d $WTOOLS_CACHE ]]
 then
     mkdir $WTOOLS_CACHE
