@@ -86,7 +86,6 @@ endfu
 
 " Key Mapping {{{
 
-map <C-p> :CtrlPLastMode --dir<CR>
 map <C-n> :NERDTreeToggle<CR>
 nnoremap <silent> <F9> :TagbarToggle<CR>
 nnoremap <silent> <F1> :call MyHelpToggle()<CR>
@@ -105,21 +104,15 @@ endif
 
 " ctrlp configuration {{{
 
-"let g:ctrlp_cmd = 'exe "CtrlP".get(["","Buffer","MRU"], v:count)' "'CtrlP --dir'
-let g:ctrlp_cmd = 'CtrlP --dir'
-let g:ctrlp_working_path_mode = 'ra'
-"let g:ctrlp_working_path_mode = '0'
 let g:ctrlp_by_filename = 1
-let g:ctrlp_root_markers = ['cscope.files']
-let g:ctrlp_user_command = ['cscope.files', 'cat %s/cscope.files']
+let g:ctrlp_user_command = ['cscope.files', 'cd %s&& cat cscope.files']
 let g:ctrlp_max_files = 0
 let g:ctrlp_lazy_update = 1
 let g:ctrlp_max_height = 20
 let g:ctrlp_use_caching = 0
 let g:ctrlp_match_window = 'results:100' " overcome limit imposed by max height
 
-let g:ctrlp_set_cwd = 0
-function! s:setcwd()
+function! SetCtrlpPrjDir()
   if exists('g:ctrlp_prj_dir') | retu | en
   let cph = expand('%:p:h', 1)
   if cph =~ '^.\+://' | retu | en
@@ -128,13 +121,10 @@ function! s:setcwd()
     if wd != '' | let &acd = 0 | brea | en
   endfo
   let g:ctrlp_prj_dir = fnameescape(wd == '' ? cph : substitute(wd, mkr.'$', '.', ''))
-  echom g:ctrlp_prj_dir
-  exe 'lc!' fnameescape(wd == '' ? cph : substitute(wd, mkr.'$', '.', ''))
 endfunction
 
-autocmd BufEnter * call s:setcwd()
-
-
+call SetCtrlpPrjDir()
+let g:ctrlp_cmd = 'CtrlP ' . g:ctrlp_prj_dir
 
 
 " }}}
