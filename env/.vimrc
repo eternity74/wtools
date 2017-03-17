@@ -138,18 +138,13 @@ let g:ctrlp_cmd = 'CtrlP ' . g:ctrlp_prj_dir
 let g:neocomplcache_enable_at_startup = 1
 
 " }}}
+
 " Whitespace & EndingSpace Highlight {{{
 highlight ExtraWhitespace ctermbg=red guibg=red
 match ExtraWhitespace /\s\+$/
-set list listchars=tab:»·,trail:·,extends:$,nbsp:= 
+set list listchars=tab:›∙,trail:∙,extends:$,nbsp:= 
 " }}}
 
-" My autorun hooks {{{
-if !exists('s:initialized')
-  let s:initialized=1
-  let s:cwd = getcwd()
-en
-" }}}
 
 " seperate viminfo/ctrlp session for screen window {{{
 if filereadable("./.prjdirs")
@@ -173,4 +168,5 @@ endif
 "map <ScrollWheelUp> <C-Y>
 "map <ScrollWheelDown> <C-E>
 " }}}
+
 " vim:ft=vim:fdm=marker:ff=unix:nowrap:tabstop=4:shiftwidth=4:softtabstop=4:smarttab:shiftround:expandtab
