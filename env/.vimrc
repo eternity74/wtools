@@ -147,7 +147,7 @@ set list listchars=tab:›∙,trail:∙,extends:$,nbsp:=
 
 
 " seperate viminfo/ctrlp session for screen window {{{
-if filereadable("./.prjdirs")
+if filereadable("./.prjdirs") && 0
 set viminfo+=n./.viminfo
 let g:ctrlp_cache_dir = "./.ctrlp_cache"
 elseif $STY != ''
