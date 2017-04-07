@@ -26,3 +26,4 @@ if [[ -n "$TMUX" ]]; then
   export TMUX_UNIQUE=`tmux display-message -p "#S#{window_id}#D"`
 fi
 alias adb='~/wtools/bin/adb'
+alias tmux='tmux -2'
